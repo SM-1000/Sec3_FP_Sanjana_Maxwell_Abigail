@@ -1,0 +1,79 @@
+```{r}
+# load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+#cleaning player_valuations data
+player_valuations_top5 <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(date >= season_start & date <= season_end, 
+         player_club_domestic_competition_id %in% top5_leagues)
+
+# define top 5 leagues and the season range
+top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")
+season_start <- as.Date("2024-08-01")
+season_end <- as.Date("2025-06-30")
+
+# filter player valuations to the correct leagues and date range
+valuations_season <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# calculate average market value per club during the season
+club_market_values <- valuations_season %>%
+  group_by(current_club_id) %>%
+  summarise(
+    avg_market_value = mean(market_value_in_eur, na.rm = TRUE),
+    n_players = n()
+  ) %>%
+  ungroup()
+
+# filter and prepare match results for the same season and leagues
+games_season <- games %>%
+  mutate(date = as.Date(date)) %>%
+  filter(competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# determine match winner 
+games_with_results <- games_season %>%
+  mutate(winner = case_when(
+    home_club_goals > away_club_goals ~ home_club_id,
+    away_club_goals > home_club_goals ~ away_club_id,
+    TRUE ~ NA_integer_
+  ))
+
+# convert match data to team-level records
+team_game_stats <- games_with_results %>%
+  pivot_longer(cols = c(home_club_id, away_club_id),
+               names_to = "home_away", values_to = "club_id") %>%
+  group_by(club_id) %>%
+  summarise(
+    games_played = n(),
+    wins = sum(club_id == winner, na.rm = TRUE),
+    win_percentage = wins / games_played
+  ) %>%
+  ungroup()
+
+# merge market value with win percentage and club names
+club_performance <- team_game_stats %>%
+  left_join(club_market_values, by = c("club_id" = "current_club_id")) %>%
+  left_join(clubs, by = "club_id")  #assumes clubs has club_id and name
+
+# plot market value vs win percentage with club labels
+library(ggplot2)
+ggplot(club_performance, aes(x = avg_market_value, y = win_percentage)) +
+  geom_point(alpha = 0.7) +  # just dots
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # trendline
+  labs(
+    title = "Do teams with higher market values win more?",
+    subtitle = "Top 5 European Leagues, 2024–25 season",
+    x = "Average market value (eur)",
+    y = "Win percentage"
+  ) +
+  theme_minimal()
+
+
+```
+
