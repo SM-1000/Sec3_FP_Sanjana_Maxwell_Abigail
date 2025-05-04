@@ -1,7 +1,6 @@
 # Load required libraries
 library(ggplot2)
 library(dplyr)
-library(patchwork)
 
 # Define top 5 European football leagues
 top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")  # Premier League, Ligue 1, Serie A, La Liga, Bundesliga
