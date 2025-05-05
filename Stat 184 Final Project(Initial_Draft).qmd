@@ -81,10 +81,7 @@ valuations_season <- player_valuations_top5 %>%
   filter(between(date, season_start, season_end)) %>%
   left_join(players, by = "player_id", suffix = c("", "_player")) %>%
   mutate(age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25)
-```
 
-
-```{r}
 # load necessary libraries
 library(dplyr)
 library(ggplot2)
