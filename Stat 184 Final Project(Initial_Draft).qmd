@@ -146,18 +146,3 @@ team_game_stats <- games_with_results %>%
 club_performance <- team_game_stats %>%
   left_join(club_market_values, by = c("club_id" = "current_club_id")) %>%
   left_join(clubs, by = "club_id")  #assumes clubs has club_id and name
-
-# plot market value vs win percentage with club labels
-ggplot(club_performance, aes(x = win_percentage, y = avg_market_value)) +
-  geom_point(alpha = 0.7) +
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +
-  scale_y_continuous(
-    labels = function(x) paste0(round(x / 1e6), "M")
-  ) +
-  labs(
-    title = "Do Teams With Higher Market Values Win More?",
-    subtitle = "Top 5 European Leagues, 2024–25 Season",
-    x = "Win Percentage",
-    y = "Average Market Value (millions of eur)"
-  ) +
-  theme_minimal()
