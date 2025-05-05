@@ -1,0 +1,54 @@
+---
+title: "Stat 184 Final Project"
+format: pdf
+---
+
+# Introduction
+
+Football is the most popular sport in the world, where major tournaments like the FIFA World Cup and major leagues such as the English Premier League, Ligue 1, Serie A, La Liga and the Bundesliga attract billions of followers and viewers. Better known as soccer in the United States, football is a simple game where two teams compete to score goals by moving the ball into the opposing net, primarily using their feet. Contrasting the simplicity of the game is the dynamics behind the scenes, where clubs invest heavily in players after analyzing metrics like market value, match statistics, and positional roles. This leads us to our project, which examines how player attributes such as age, minutes played, position, and goal contributions as well as the team attribute of winning percentages relate to market valuation and ultimate team success across the top 5 leagues, particularly for the 2024-2025 season.
+
+# Research Questions
+
+Our goal is to get a better understanding of how player and eventually, team performance metrics relate to both market valuation and team outcomes. In order to accomplish that, we ask: How does a player's age and position influence their minutes played and market value? Do players with higher goal contributions consistently have greater market worth? How do team averages such as player age, minutes played, and goal contributions correlate with win percentages across competitions?
+
+Through visual analyses, including scatterplots, boxplot, heatmap, and summary tables, we aim to understand how measurable performance indicators influence both individual worth and collective outcomes in the sport.
+
+# Provenance of Our Data
+
+For this project, we used four datasets to gather core performance indicators in football, all obtained from Transfermarkt's Football Data posted on Kaggle. Transfermarkt is a widely used football database that tracks player market values, match statistics, transfers, and club performance across global competitions. The dataset was created and maintained by David Cariboo, who used a web-scraping tool called transfermarkt-scraper along with Python scripts and SQL queries to extract, clean, and publish the data. The full data pipeline and source code are available on his GitHub. The purpose of his work is to keep these datasets up to date and publicly available on well-known data catalogs. The data is publicly available under the CC0 (Public Domain) license, with an expected update frequency of once per week. Our primary data source was Player Valuation while our secondary sources were Player Appearances, Player Statistics & Demographics and Game Statistics.
+
+## Primary Dataset
+
+-   **Player Valuation**: This was our main dataset that provided market value data for players over time. Key attributes were used consistently throughout our visualizations, which were player_id, date, and market_value_in_eur. The case is a single player.
+
+## Secondary Datasets
+
+-   **Player Appearances**: This dataset includes detailed match-level data on individual players. We used attributes like game_id, player_id, player_club_id, goals, assists, and minutes_played to analyze player contributions across matches. The case is a single player.
+
+-   **Player Statistics & Demographics**: This dataset includes personal and positional data for players. Our analysis focused on position, while also referencing identifiers like player_id and broader details such as date_of_birth for age related analysis. The case is a single player.
+
+-   **Game Statistics**: This dataset includes match-level team performance indicators. We used game_id, home_club_id, away_club_id, home_club_goals, and away_club_goals to calculate our new attribute, win percentages. Other fields, including competition_id, season, and round, offer useful structural context for game outcomes. The case is a single game.
+
+# Implementation of FAIR & CARE Principles
+
+## FAIR Principles
+
+## CARE Principles
+
+# Exploratory Data Analysis (EDA)
+
+### Age, Playing Time & Position
+
+### Age, Position & Market Value
+
+### Playing Time, Market Value & Position
+
+### Goals, Market Value & Position
+
+### Goal Distribution by Position
+
+### Market Value & Win Percentages
+
+### Top 15 Teams by Win Percentages and Player Metrics
+
+# Conclusion
