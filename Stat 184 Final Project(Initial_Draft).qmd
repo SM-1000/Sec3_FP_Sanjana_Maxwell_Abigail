@@ -56,6 +56,11 @@ For this project, we used four datasets to gather core performance indicators in
 
 ### Code Appendix
 # Data Wrangling Code 
+# load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
 # Define top 5 European football leagues
 top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")  # Premier League, Ligue 1, Serie A, La Liga, Bundesliga
 
@@ -81,23 +86,13 @@ players <- players %>%
 valuations_season <- player_valuations_top5 %>%
   filter(between(date, season_start, season_end)) %>%
   left_join(players, by = "player_id", suffix = c("", "_player")) %>%
-  mutate(age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25)
-
-# load necessary libraries
-library(dplyr)
-library(ggplot2)
-library(tidyr)
+  mutate(age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25)\
 
 #cleaning player_valuations data
 player_valuations_top5 <- player_valuations %>%
   mutate(date = as.Date(date)) %>%
   filter(date >= season_start & date <= season_end, 
          player_club_domestic_competition_id %in% top5_leagues)
-
-# define top 5 leagues and the season range
-top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")
-season_start <- as.Date("2024-08-01")
-season_end <- as.Date("2025-06-30")
 
 # filter player valuations to the correct leagues and date range
 valuations_season <- player_valuations %>%
