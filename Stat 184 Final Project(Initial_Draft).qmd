@@ -1,6 +1,6 @@
 ---
 title: "Analyzing Player Metrics and Market Value in European Football"
-author: "Abigail Chen, Maxwell Gerhart, and Sanjana Menon"
+author: "Abigail Chen, Maxwell Gerhart, Sanjana Menon"
 format: pdf
 editor: 
   markdown: 
@@ -106,7 +106,7 @@ Appearances, Player Statistics & Demographics and Game Statistics.
   The dataset supports public interest research in sports analytics, education, and predictive modeling. By promoting open access to structured player data, it fosters innovation and insight in football analysis.
 
 - **Authority to Control**:  
-  As the dataset aggregates public sports data without identifiable personal or community information, issues of consent and governance are minimal. However, transparency about the original data sources could further strengthen accountability.
+  As the dataset aggregates public sports data without identifiable private or community information, issues of consent and governance are minimal. However, transparency about the original data sources could further strengthen accountability.
 
 - **Responsibility**:  
   While the dataset itself poses low ethical risk, users must remain mindful of how derived insights are applied—particularly in contexts like player valuation or contract negotiation, where misuse could influence careers or reinforce bias.
@@ -651,7 +651,7 @@ Figure 6: This table presents the top 10 players by average market value for the
 
 ### Insight
 
-The cumulative table highlights that attacking players generally command the highest market values, occupying six of the top ten spots. Vinicius Junior and Erling Haaland share the highest average market value at €200 million. Even though goals scored appear to be a significant factor in valuation (as seen with Haaland and Mbappé), other factors such as overall performance, and position also have a crucial role, as a slight majority of the players with the higher market value are attackers. However, strong midfielders also share high market values like the highly valued midfielders like Jude Bellingham and Jamal Musiala. Interestingly, Rodri, a midfielder with a high market value, has played significantly fewer minutes and scored no goals in the appearances listed, suggesting his valuation is likely based on his crucial role and impact beyond direct goal contributions.
+The cumulative table highlights that attacking players generally command the highest market values, occupying six of the top ten spots. Vinicius Junior and Erling Haaland share the highest average market value at €200 million. Even though goals scored appear to be a significant factor in valuation (as seen with Haaland and Mbappé), other factors such as overall performance, and position also have a crucial role. However, strong midfielders also share high market values like the highly valued midfielders like Jude Bellingham and Jamal Musiala. Interestingly, Rodri, a midfielder with a high market value, has played significantly fewer minutes and scored no goals in the appearances listed, suggesting his valuation is likely based on his crucial role and impact beyond direct goal contributions.
 
 
 ### Market Value & Win Percentages
