@@ -361,6 +361,8 @@ ggplot(heatmap_data, aes(x = age_bin, y = position, fill = avg_market_value_mill
 
 Figure 2: This heatmap visualizes average market value (in millions of euros) across different age groups and positions. Warmer colors represent higher values, with labels showing rounded figures. This allows easy comparison of how age and role impact player valuation in elite European football.
 
+### Insight
+
 We see that players tend to be more valuable in positions higher up the pitch. Additionally, there is a clear peak in market value just before the typical peak in minutes played. This suggests that clubs invest more in players approaching their prime, anticipating strong performance and longevity. The alignment between expected trends and the data reinforces the reliability of this insight.
 
 ### Playing Time, Market Value & Position
