@@ -88,8 +88,14 @@ heatmap_data <- all_combinations %>%
     label = ifelse(is.na(avg_market_value_millions), "N/A", sprintf("%.0f€", avg_market_value_millions))
   )
 
+# Order positions
+heatmap_data$position <- factor(
+  heatmap_data$position, 
+  levels = c("Goalkeeper", "Defender", "Midfield", "Attack", "Unknown")
+)
+
 # Plot the heatmap
-heatmap_plot <- ggplot(heatmap_data, aes(x = age_bin, y = position, fill = avg_market_value_millions)) +
+ggplot(heatmap_data, aes(x = age_bin, y = position, fill = avg_market_value_millions)) +
   geom_tile() +
   geom_text(aes(label = label), color = "white", size = 5, fontface = "bold") +
   scale_fill_gradient(
