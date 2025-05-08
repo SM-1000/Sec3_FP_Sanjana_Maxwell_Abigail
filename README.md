@@ -33,8 +33,8 @@ The data was sourced from the [Transfermarkt Football Data Kaggle repository](ht
 
 ## Authors
 
-Abigail Chen
+Abigail Chen (akc6502@psu.edu)
 
 Maxwell Gerhart (mbg5979@psu.edu)
 
-Sanjana Menon
+Sanjana Menon (ssm5808@psu.edu)
