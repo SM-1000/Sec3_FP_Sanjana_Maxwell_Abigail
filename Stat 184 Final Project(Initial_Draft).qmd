@@ -765,8 +765,6 @@ This raises hypotheses worth exploring further:
 - Are teams with more balanced squad utilization (minutes played) more successful?
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(gt)
-
 # prepare players with birth_date
 players_cleaned <- players %>%
   mutate(birth_date = as.Date(substr(date_of_birth, 1, 10))) %>%
@@ -805,11 +803,12 @@ top_teams_table %>%
   gt() %>%
   fmt_number(columns = where(is.numeric), decimals = 2) %>%
   tab_header(
-    title = "Top 15 Teams by Win Percentages and Player Metrics"
+    title = md("**Table 1.** Top 15 Teams by Win Percentages and Player Metrics")
   ) %>%
-  cols_align(
-    align = "center",
-    columns = everything()
+  cols_align(align = "center", columns = everything()) %>%
+  tab_options(
+    table.font.size = px(10),
+    table.width = pct(100)
   )
 ```
 
@@ -1010,14 +1009,3 @@ player_club_stats <- appearances %>%
     avg_minutes = mean(minutes_played, na.rm = TRUE),
     avg_goal_contribution = mean(goal_contribution, na.rm = TRUE)
   )
-
-top_club_table <- team_results %>%
-  left_join(player_club_stats, by = c("club_id" = "player_club_id")) %>%
-  left_join(clubs %>% select(club_id, name), by = "club_id") %>%
-  arrange(desc(win_percentage)) %>%
-  slice(1:15) %>%
-  gt() %>%
-  fmt_number(columns = where(is.numeric), decimals = 2) %>%
-  tab_header(title = "Top 15 Teams by Win Percentages and Player Metrics") %>%
-  cols_align(align = "center", columns = everything())
-```
