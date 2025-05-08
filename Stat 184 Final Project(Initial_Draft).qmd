@@ -1,5 +1,6 @@
 ---
-title: "Stat 184 Final Project"
+title: "Analyzing Player Metrics and Market Value in European Football"
+author: "Abigail Chen, Maxwell Gerhart, and Sanjana Menon"
 format: pdf
 editor: 
   markdown: 
@@ -129,6 +130,10 @@ appearances <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State Univer
 players <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State University/Downloads/data/players.csv")
 
 player_valuations <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State University/Downloads/data/player_valuations.csv")
+
+games <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State University/Downloads/data/games.csv")
+
+clubs <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State University/Downloads/data/clubs.csv")
 
 # Define top 5 European football leagues
 top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")  # Premier League, Ligue 1, Serie A, La Liga, Bundesliga
@@ -367,17 +372,472 @@ We see that players tend to be more valuable in positions higher up the pitch. A
 
 ### Playing Time, Market Value & Position
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
+# Load required libraries
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyverse)
+library(scales)
+
+# Aggregate player appearances
+player_stats <- appearances_top5 %>%
+  filter(date >= season_start & date <= season_end) %>%
+  group_by(player_id) %>%
+  summarise(
+    total_goals = sum(goals, na.rm = TRUE),
+    total_appearances = n(),
+    total_minutes = sum(minutes_played, na.rm = TRUE),
+    avg_minutes_per_appearance = total_minutes / total_appearances,
+    .groups = "drop"
+  )
+
+# Average market value
+player_values <- valuations_season %>%
+  group_by(player_id) %>%
+  summarise(avg_market_value = mean(market_value_in_eur, na.rm = TRUE), .groups = "drop")
+
+# Merge stats and values
+player_analysis <- player_stats %>%
+  inner_join(player_values, by = "player_id") %>%
+  left_join(
+    players %>% select(player_id, position),
+    by = "player_id"
+  )
+
+# Plot: Minutes vs. Market Value
+appearance_plot <- ggplot(
+  player_analysis,
+  aes(x = total_minutes, y = avg_market_value, color = position)
+  ) +
+  geom_point(alpha = 0.5, size = 1.3) +
+  geom_smooth(method = "loess", se = FALSE) +
+  scale_color_brewer(palette = "Set1") +
+  scale_y_continuous(labels = label_number(scale = 1e-6, suffix = "M")) +
+  labs(
+    title = "Market Value vs. Minutes Played",
+    subtitle = "Top 5 European Leagues (2024–2025 Season)",
+    x = "Total Minutes Played",
+    y = "Avg. Market Value (EUR)",
+    color = "Position"
+  ) +
+  theme_minimal() +
+  theme(plot.margin = margin(10, 10, 30, 10)) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 12),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9)
+  )
+
+print(appearance_plot)
+
+```
+Figure 3: This scatterplot displays the relationship between total minutes played and average market value (in millions of Euros) for players in the top 5 European leagues during the 2024-2025 season. Each point represents a player, colored by their position: Attack (red), Defender (blue), Goalkeeper (green), and Midfield (purple). Trend lines for each position group illustrate the general tendency in market value relative to playing time.
+
+### Insight
+
+Generally, players who accumulate more playing time tend to have a higher market value, as indicated by the upward sloping trend lines across all positions. However, the rate of increase in market value with minutes played appears to be steeper for attacking and midfield players compared to defenders and goalkeepers. This suggests that for outfield positions, consistent playing time is more strongly correlated with higher valuation. There are also notable outliers, particularly among attacking and midfield players, who command very high market values even with varying amounts of playing time, potentially reflecting exceptional talent or potential.
+
 ### Goals, Market Value & Position
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
+# Load required libraries
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyverse)
+library(scales)
+
+# Aggregate player appearances
+player_stats <- appearances_top5 %>%
+  filter(date >= season_start & date <= season_end) %>%
+  group_by(player_id) %>%
+  summarise(
+    total_goals = sum(goals, na.rm = TRUE),
+    total_appearances = n(),
+    total_minutes = sum(minutes_played, na.rm = TRUE),
+    avg_minutes_per_appearance = total_minutes / total_appearances,
+    .groups = "drop"
+  )
+
+player_values <- valuations_season %>%
+  group_by(player_id) %>%
+  summarise(avg_market_value = mean(market_value_in_eur, na.rm = TRUE), .groups = "drop")
+
+player_analysis <- player_stats %>%
+  inner_join(player_values, by = "player_id") %>%
+  left_join(select(players, player_id, position), by = "player_id")
+
+# Filter out goalkeepers from the player analysis
+player_analysis <- player_analysis %>%
+  filter(position != "Goalkeeper" & position != "Missing" & !is.na(position))  # Exclude goalkeepers
+
+# Plot: Market Value vs. Goals
+goal_plot <- ggplot(player_analysis, aes(x = total_goals, y = avg_market_value, color = position)) +
+  geom_point(alpha = 0.5, size = 1.5) +
+  geom_smooth(method = "loess", se = FALSE) +
+  scale_color_brewer(palette = "Set1") +
+  scale_y_continuous(labels = label_number(scale = 1e-6, suffix = "M")) +
+  labs(
+    title = "Market Value vs. Number of Goals",
+    subtitle = "Top 5 European Leagues (2024–2025 Season)",
+    x = "Total Goals",
+    y = "Avg. Market Value (EUR)",
+    color = "Position"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 12),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9)
+  )
+
+print(goal_plot)
+
+```
+
+
+Figure 4: This scatterplot illustrates the correlation between total goals scored and average market value (in millions of Euros) for players in the top 5 European leagues during the 2024-2025 season. Each data point represents a player, distinguished by their position: Attack (red), Defender (blue), and Midfield (green). Trend lines for each position category highlight the general pattern in market value relative to the number of goals scored.
+
+### Insight
+
+This graph suggests a positive correlation between the number of goals scored and a player's market value, particularly seen in the upward trend lines for attacking and midfield positions. Goalkeepers were omitted due to their lack of goals. For attacking players, the market value tends to increase more significantly with each goal, showing that a higher premium is placed on better goal-scoring ability. Midfielders also show a positive trend, though less steep than attackers. On the other hand, defenders show a relatively flat trend line with fewer goals, indicating that their market value is less directly influenced by the number of goals they score. This suggests that factors other than goal-scoring, such as defensive skills, may contribute more to their valuation.
 
 ### Goal Distribution by Position
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
+# Load required libraries
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyverse)
+
+# Filter for Top 5 European leagues
+top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")
+
+if ("competition_id" %in% colnames(appearances)) {
+  appearances <- appearances %>%
+    filter(competition_id %in% top5_leagues)
+}
+
+# Convert date column to Date format
+if ("date" %in% colnames(appearances)) {
+  appearances <- appearances %>%
+    mutate(date = as.Date(date))
+}
+
+# Define season boundaries
+season_start <- as.Date("2024-08-01")
+season_end <- as.Date("2025-06-30")
+
+# Summarize goal contributions per player
+player_stats <- appearances %>%
+  filter(date >= season_start & date <= season_end) %>%
+  group_by(player_id) %>%
+  summarise(
+    total_goals = sum(goals, na.rm = TRUE),
+    total_assists = sum(assists, na.rm = TRUE),
+    total_goal_contributions = total_goals + total_assists
+  )
+
+# Merge with player positions and remove goalkeepers
+player_analysis <- player_stats %>%
+  left_join(
+    select(players, player_id, position),
+    by = "player_id"
+  ) %>%
+  filter(position != "Goalkeeper")  # Exclude goalkeepers
+
+# Generate box plot
+box_plot <- ggplot(player_analysis, aes(x = position, y = total_goal_contributions, fill = position)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+  coord_cartesian(ylim = c(0, 20)) +
+  labs(
+    title = "Distribution of Goal Contributions by Position",
+    subtitle = "Top 5 European Leagues (2024–2025 Season)",
+    x = "Position",
+    y = "Total Goal Contributions"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(size = 15, face = "bold"),
+    axis.title = element_text(size = 12),
+    legend.title = element_text(size = 11),
+    legend.text = element_text(size = 10)
+  )
+
+# Display the plot
+print(box_plot)
+
+```
+
+Figure 5: This boxplot displays the distribution of total goal contributions across different player positions in the top 5 European leagues during the 2024-2025 season. The boxes represent the interquartile range (IQR), the horizontal line inside each box indicates the median, and the whiskers extend to show the variability outside the lower and upper quartiles. Outliers, if any, would be plotted as individual points beyond the whiskers.
+
+### Insight
+
+The distribution of goal contributions varies significantly by position. Attacking players exhibit the highest median number of goal contributions and the widest spread. This shows that while many contribute a moderate number of goals and assists, there is a strong tendency to achieve considerably higher totals. Midfielders show a lower median and a narrower IQR compared to attackers, meaning they have a more concentrated range of goal contributions. Defenders generally have the lowest median number of goal contributions, with a very tight IQR close to zero, which is expected given their primary role is not attacking. 
+
+The presence of some outliers for defenders and midfielders also display instances where players in these positions have made surprisingly high attacking contributions.
+
+### Top 10 Players by Market Value, Position, Goals, Appearances & Minutes Per Appearances 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=4}
+
+# Load additional library
+library(knitr)
+
+# Aggregate appearances data by player
+player_stats <- appearances %>%
+  filter(date >= season_start & date <= season_end) %>%
+  group_by(player_id) %>%
+  summarise(
+    total_goals = sum(goals, na.rm = TRUE),
+    total_appearances = n(),
+    total_minutes = sum(minutes_played, na.rm = TRUE),
+    avg_minutes_per_appearance = total_minutes / total_appearances
+  )
+
+# Get average market value per player
+player_values <- valuations_season %>%
+  group_by(player_id) %>%
+  summarise(avg_market_value = mean(market_value_in_eur, na.rm = TRUE))
+
+# Combine player data
+player_analysis <- player_stats %>%
+  inner_join(player_values, by = "player_id") %>%
+  left_join(select(players, player_id, name, position), by = "player_id") %>%
+  mutate(goal_contributions = total_goals)
+
+# Select top 10 by market value
+top10_players <- player_analysis %>%
+  arrange(desc(avg_market_value)) %>%
+  slice_head(n = 10) %>%
+  mutate(
+    avg_market_value_millions = round(avg_market_value / 1e6, 2)
+  ) %>%
+  select(
+    name,
+    position,
+    total_goals,
+    total_appearances,
+    total_minutes,
+    avg_minutes_per_appearance,
+    avg_market_value_millions
+  )
+
+# Rename for table output
+colnames(top10_players) <- c(
+  "Player Name",
+  "Position",
+  "Goals",
+  "Appearances",
+  "Minutes Played",
+  "Avg. Minutes per Appearance",
+  "Avg. Market Value (EUR, Millions)"
+)
+
+# Display as markdown table
+kable(top10_players, format = "markdown", align = "c", caption = "Top 10 Players by Average Market Value (2024–2025 Season)")
+
+```
+
+Figure 6: This table presents the top 10 players by average market value for the 2024-2025 season. It includes key performance indicators such as position, goals scored, total appearances, total minutes played, average minutes per appearance, and average market value in millions of Euros.
+
+### Insight
+
+The cumulative table highlights that attacking players generally command the highest market values, occupying six of the top ten spots. Vinicius Junior and Erling Haaland share the highest average market value at €200 million. Even though goals scored appear to be a significant factor in valuation (as seen with Haaland and Mbappé), other factors such as overall performance, and position also have a crucial role, as a slight majority of the players with the higher market value are attackers. However, strong midfielders also share high market values like the highly valued midfielders like Jude Bellingham and Jamal Musiala. Interestingly, Rodri, a midfielder with a high market value, has played significantly fewer minutes and scored no goals in the appearances listed, suggesting his valuation is likely based on his crucial role and impact beyond direct goal contributions.
+
+
 ### Market Value & Win Percentages
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+#cleaning player_valuations data
+player_valuations_top5 <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(date >= season_start & date <= season_end, 
+         player_club_domestic_competition_id %in% top5_leagues)
+
+# define top 5 leagues and the season range
+top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")
+season_start <- as.Date("2024-08-01")
+season_end <- as.Date("2025-06-30")
+
+# filter player valuations to the correct leagues and date range
+valuations_season <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# calculate average market value per club during the season
+club_market_values <- valuations_season %>%
+  group_by(current_club_id) %>%
+  summarise(
+    avg_market_value = mean(market_value_in_eur, na.rm = TRUE),
+    n_players = n()
+  ) %>%
+  ungroup()
+
+# filter and prepare match results for the same season and leagues
+games_season <- games %>%
+  mutate(date = as.Date(date)) %>%
+  filter(competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# determine match winner 
+games_with_results <- games_season %>%
+  mutate(winner = case_when(
+    home_club_goals > away_club_goals ~ home_club_id,
+    away_club_goals > home_club_goals ~ away_club_id,
+    TRUE ~ NA_integer_
+  ))
+
+# convert match data to team-level records
+team_game_stats <- games_with_results %>%
+  pivot_longer(cols = c(home_club_id, away_club_id),
+               names_to = "home_away", values_to = "club_id") %>%
+  group_by(club_id) %>%
+  summarise(
+    games_played = n(),
+    wins = sum(club_id == winner, na.rm = TRUE),
+    win_percentage = wins / games_played
+  ) %>%
+  ungroup()
+
+# merge market value with win percentage and club names
+club_performance <- team_game_stats %>%
+  left_join(club_market_values, by = c("club_id" = "current_club_id")) %>%
+  left_join(clubs, by = "club_id")  #assumes clubs has club_id and name
+
+# plot market value vs win percentage with club labels
+library(ggplot2)
+ggplot(club_performance, aes(x = avg_market_value, y = win_percentage)) +
+  geom_point(alpha = 0.7) +  # just dots
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # trendline
+  labs(
+    title = "Do teams with higher market values win more?",
+    subtitle = "Top 5 European Leagues, 2024–25 season",
+    x = "Average market value (eur)",
+    y = "Win percentage"
+  ) +
+  theme_minimal()
+```
 
 ### Top 15 Teams by Win Percentages and Player Metrics
 
 # Conclusion
 
+This project examined how player attributes influence market value and team success in top European leagues. We found that attackers peak earlier and hold higher market values, while goal contributions and minutes played are strong indicators of valuation. Team-level data showed that clubs with higher average player values tend to win more. Overall, the analysis highlights how performance metrics and positional roles shape both individual worth and team outcomes in modern football.
+
 ### Code Appendix
 
-```{r}
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+# Load required libraries
+library(readr)
+library(ggplot2)
+library(dplyr)
+
+# Load data
+appearances <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State University/Downloads/data/appearances.csv")
+
+players <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State University/Downloads/data/players.csv")
+
+player_valuations <- read_csv("C:/Users/maxwe/OneDrive - The Pennsylvania State University/Downloads/data/player_valuations.csv")
+
+# Define top 5 European football leagues
+top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")  # Premier League, Ligue 1, Serie A, La Liga, Bundesliga
+
+# Define season date range
+season_start <- as.Date("2024-08-01")
+season_end <- as.Date("2025-06-30")
+
+# Clean and filter appearances data
+appearances_top5 <- appearances %>%
+  filter(competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Clean and filter player valuations data
+player_valuations_top5 <- player_valuations %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Prepare player data with standardized birth date
+players <- players %>%
+  mutate(birth_date = as.Date(substr(date_of_birth, 1, 10)))  # Extract date part
+
+# Filter valuations for current season and calculate player age
+valuations_season <- player_valuations_top5 %>%
+  filter(between(date, season_start, season_end)) %>%
+  left_join(players %>% select(player_id, birth_date), by = "player_id") %>%
+  mutate(age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25)
+
+# Calculate minutes played per player for current season
+player_season_stats <- appearances_top5 %>%
+  filter(between(date, season_start, season_end)) %>%
+  group_by(player_id) %>%
+  summarize(
+    total_minutes = sum(minutes_played, na.rm = TRUE),
+    matches_played = n(),
+    avg_minutes_per_match = total_minutes / matches_played,
+    .groups = "drop"
+  )
+
+# Merge most recent valuation, minutes played, and player position
+player_analysis <- valuations_season %>%
+  group_by(player_id) %>%
+  arrange(desc(date)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  left_join(player_season_stats, by = "player_id") %>%
+  left_join(players %>% select(player_id, position), by = "player_id")
+
+# Create age bins and rounded age for analysis
+player_analysis <- player_analysis %>%
+  mutate(
+    age_bin = cut(age, breaks = seq(16, 40, by = 2), include.lowest = TRUE),
+    age_rounded = floor(age)
+  )
+
+# Create the scatter plot with facets for each position
+ggplot(player_analysis, aes(x = age, y = total_minutes)) +
+  geom_point(aes(color = position), alpha = 0.7) +
+  geom_smooth(method = "loess", se = TRUE, aes(color = position), alpha = 0.2) +
+  facet_wrap(~ position, ncol = 2) +
+  scale_color_manual(values = c(
+    "Attack" = "#FF5733", 
+    "Midfield" = "#33A1FD", 
+    "Defender" = "#9370DB", 
+    "Goalkeeper" = "#2ECC71"
+  )) +
+  scale_x_continuous(breaks = seq(16, 40, by = 4), limits = c(16, 40)) +
+  labs(
+    title = "Age vs Minutes Played by Position",
+    subtitle = "Top 5 European Leagues (2024–2025 Season)",
+    x = "Age (years)",
+    y = "Total Minutes Played",
+    color = "Position"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.background = element_rect(fill = "lightgray", color = NA),
+    strip.text = element_text(face = "bold", size = 16),
+    axis.title = element_text(face = "bold", size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 13),
+    legend.text = element_text(size = 11),
+    plot.title = element_text(size = 18, face = "bold"),
+    plot.subtitle = element_text(size = 14),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
 ```
