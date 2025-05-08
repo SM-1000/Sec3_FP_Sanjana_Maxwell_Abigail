@@ -8,7 +8,9 @@ Using publicly available football data from Transfermarkt (via Kaggle), we exami
 
 ### Interesting Insight
 
-One key finding is that players typically reach their highest market value just before their peak playing time. Attackers, for instance, peak in value around ages 24–26, while goalkeepers peak closer to 30. This anticipatory investment behavior suggests clubs value potential performance and longevity.  
+One key finding is that players typically reach their highest market value just before their peak playing time. Attackers, for instance, peak in value around ages 24–26, while goalkeepers peak closer to 30. This anticipatory investment behavior suggests clubs value potential performance and longevity. 
+
+![Peak Age vs Minutes Played](AgePositionValueHeatmap.jpeg)
 
 ## Repo Structure
 
