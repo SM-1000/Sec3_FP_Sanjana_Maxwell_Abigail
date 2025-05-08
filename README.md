@@ -18,6 +18,10 @@ One key finding is that players typically reach their highest market value just 
 - `AgePositionValueAnalysis.R`: Script analyzing player age, position, and market value.
 - `PeakAgeAnalysis.R`: Script focused on identifying peak performance ages.
 - `Wrangling.R`: Script used to clean and transform datasets.
+- `goals_scatterplot`: Script analyzing player position, market value, and goal contributions.
+- `minutes_played_scatterplot`: Script comparing player position, market value and playing time.
+- `positions_boxplot`: Script comparing the goal distributions among different positions.
+- `top_10_table`: Script creating a table that highlights new key metrics such as appearances and average minutes per appearance and position, goals, and market value. 
 - `README.md`: Project overview and key findings.
 - `Project_Guidelines.md`: Project expectations and requirements.
 - `Stat 184 Final Project(Initial_Draft...).pdf`: Draft report of project findings.
@@ -33,8 +37,6 @@ The data was sourced from the [Transfermarkt Football Data Kaggle repository](ht
 
 ## Authors
 
-Abigail Chen (akc6502@psu.edu)
-
-Maxwell Gerhart (mbg5979@psu.edu)
-
 Sanjana Menon (ssm5808@psu.edu)
+Abigail Chen (akc6502@psu.edu)
+Maxwell Gerhart (mbg5979@psu.edu)
