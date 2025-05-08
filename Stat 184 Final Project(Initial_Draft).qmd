@@ -657,21 +657,38 @@ The cumulative table highlights that attacking players generally command the hig
 ### Market Value & Win Percentages
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# load necessary libraries
-library(dplyr)
-library(ggplot2)
-library(tidyr)
+# Define top 5 European football leagues
+top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")  # Premier League, Ligue 1, Serie A, La Liga, Bundesliga
+
+# Define season date range
+season_start <- as.Date("2024-08-01")
+season_end <- as.Date("2025-06-30")
+
+# Clean and filter appearances data
+appearances_top5 <- appearances %>%
+  filter(competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Clean and filter player valuations data
+player_valuations_top5 <- player_valuations %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Prepare player data with standardized dates - convert from string format
+players <- players %>%
+  mutate(birth_date = as.Date(substr(date_of_birth, 1, 10)))  # Extract date part from datetime string
+
+# Filter valuations for current season
+valuations_season <- player_valuations_top5 %>%
+  filter(between(date, season_start, season_end)) %>%
+  left_join(players, by = "player_id", suffix = c("", "_player")) %>%
+  mutate(age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25)
 
 #cleaning player_valuations data
 player_valuations_top5 <- player_valuations %>%
   mutate(date = as.Date(date)) %>%
   filter(date >= season_start & date <= season_end, 
          player_club_domestic_competition_id %in% top5_leagues)
-
-# define top 5 leagues and the season range
-top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")
-season_start <- as.Date("2024-08-01")
-season_end <- as.Date("2025-06-30")
 
 # filter player valuations to the correct leagues and date range
 valuations_season <- player_valuations %>%
@@ -720,20 +737,83 @@ club_performance <- team_game_stats %>%
   left_join(clubs, by = "club_id")  #assumes clubs has club_id and name
 
 # plot market value vs win percentage with club labels
-library(ggplot2)
-ggplot(club_performance, aes(x = avg_market_value, y = win_percentage)) +
-  geom_point(alpha = 0.7) +  # just dots
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # trendline
+ggplot(club_performance, aes(x = win_percentage, y = avg_market_value)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  scale_y_continuous(
+    labels = function(x) paste0(round(x / 1e6), "M")
+  ) +
   labs(
-    title = "Do teams with higher market values win more?",
-    subtitle = "Top 5 European Leagues, 2024–25 season",
-    x = "Average market value (eur)",
-    y = "Win percentage"
+    title = "Do Teams With Higher Market Values Win More?",
+    subtitle = "Top 5 European Leagues, 2024–25 Season",
+    x = "Win Percentage",
+    y = "Average Market Value (millions of eur)"
   ) +
   theme_minimal()
 ```
+    
+Figure 6 illustrates the relationship between a football club’s average market value (y-axis, in millions of euros) and its win percentage during the 2024–25 season (x-axis), across the top five European leagues. Each point represents a single club. The blue line represents a linear trend fitted to the data.
+
+From the graph, we can observe a positive linear trend: as clubs' market values increase, their win percentages also tend to rise. The scatterplot shows a broad spread in both variables, but the upward slope of the regression line suggests that wealthier teams tend to perform better on average. Still, the data points are widely dispersed, indicating that market value alone does not perfectly predict win rate — several low-market-value clubs perform well, and a few high-value clubs underperform.
+
+This visualization aligns with the well-documented assumption in football analytics that financial resources correlate with success, as wealthier clubs can afford more talented or experienced players. However, the wide dispersion hints at the influence of other factors that may enable less expensive teams to compete effectively or cause expensive squads to fall short.
+
+When this figure is considered alongside Table 1 (Top Teams Table), patterns emerge suggesting that average player age, minutes played, and goal contribution may be mediators in this relationship. For example, younger teams with high contributions might be delivering high value per euro spent, signaling smart investment strategies.
+
+This raises hypotheses worth exploring further:
+- Does investment in specific positions better explain performance than raw value?
+- Are teams with more balanced squad utilization (minutes played) more successful?
 
 ### Top 15 Teams by Win Percentages and Player Metrics
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(gt)
+
+# prepare players with birth_date
+players_cleaned <- players %>%
+  mutate(birth_date = as.Date(substr(date_of_birth, 1, 10))) %>%
+  select(player_id, birth_date)
+
+# join players to appearances to get age and contribution
+appearances_with_stats <- appearances %>%
+  mutate(date = as.Date(date)) %>%
+  left_join(players_cleaned, by = "player_id") %>%
+  mutate(
+    age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25,
+    goal_contribution = goals + assists
+  )
+
+# summarize per club
+team_stats <- appearances_with_stats %>%
+  group_by(player_club_id) %>%
+  summarise(
+    avg_age = mean(age, na.rm = TRUE),
+    avg_minutes = mean(minutes_played, na.rm = TRUE),
+    avg_goal_contribution = mean(goal_contribution, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# merge with win percentage and club name
+top_teams_table <- club_performance %>%
+  select(club_id, win_percentage) %>%
+  left_join(team_stats, by = c("club_id" = "player_club_id")) %>%
+  left_join(clubs %>% select(club_id, name), by = "club_id") %>%
+  select(name, win_percentage, avg_age, avg_minutes, avg_goal_contribution) %>%
+  arrange(desc(win_percentage)) %>%
+  slice_head(n = 15)
+
+# view table
+top_teams_table %>%
+  gt() %>%
+  fmt_number(columns = where(is.numeric), decimals = 2) %>%
+  tab_header(
+    title = "Top 15 Teams by Win Percentages and Player Metrics"
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = everything()
+  )
+```
 
 # Conclusion
 
