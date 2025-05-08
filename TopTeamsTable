@@ -1,0 +1,45 @@
+# prepare players with birth_date
+players_cleaned <- players %>%
+  mutate(birth_date = as.Date(substr(date_of_birth, 1, 10))) %>%
+  select(player_id, birth_date)
+
+# join players to appearances to get age and contribution
+appearances_with_stats <- appearances %>%
+  mutate(date = as.Date(date)) %>%
+  left_join(players_cleaned, by = "player_id") %>%
+  mutate(
+    age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25,
+    goal_contribution = goals + assists
+  )
+
+# summarize per club
+team_stats <- appearances_with_stats %>%
+  group_by(player_club_id) %>%
+  summarise(
+    avg_age = mean(age, na.rm = TRUE),
+    avg_minutes = mean(minutes_played, na.rm = TRUE),
+    avg_goal_contribution = mean(goal_contribution, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# merge with win percentage and club name
+top_teams_table <- club_performance %>%
+  select(club_id, win_percentage) %>%
+  left_join(team_stats, by = c("club_id" = "player_club_id")) %>%
+  left_join(clubs %>% select(club_id, name), by = "club_id") %>%
+  select(name, win_percentage, avg_age, avg_minutes, avg_goal_contribution) %>%
+  arrange(desc(win_percentage)) %>%
+  slice_head(n = 15)
+
+# view table
+top_teams_table %>%
+  gt() %>%
+  fmt_number(columns = where(is.numeric), decimals = 2) %>%
+  tab_header(
+    title = md("**Table 1.** Top 15 Teams by Win Percentages and Player Metrics")
+  ) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  tab_options(
+    table.font.size = px(10),
+    table.width = pct(100)
+  )
