@@ -1,23 +1,42 @@
-# Project Title
+# Analyzing Player Metrics and Market Value in European Football
 
-Write a 1-2 sentences that quickly and clearly convey what your repo is for.
+This project explores how player characteristics such as age, position, minutes played, and goal contributions impact individual market value and team success in the top 5 European football leagues during the 2024–2025 season.
 
 ## Overview
 
-Expand on those introductory sentences with a brief but informative description of your project's purpose and goals. This section should help visitors decide whether they should dig deeper into your repo/project.
+Using publicly available football data from Transfermarkt (via Kaggle), we examined the relationship between player attributes and market valuation, and how team-level metrics correlate with win percentages. Our analysis uses visual tools to uncover performance trends across positions and age groups, offering insights for talent evaluation and club investment strategy.
 
 ### Interesting Insight
 
-This is optional but highly recommended. You'll include one interesting insight from your project as part of the README. This insight is most effective when you include a visual. Keep in mind that this visual must be included as an image file (e.g., JPG, PNG, etc.). You can export plots created with `{ggplot2}` by using the function `ggsave`.
+One key finding is that players typically reach their highest market value just before their peak playing time. Attackers, for instance, peak in value around ages 24–26, while goalkeepers peak closer to 30. This anticipatory investment behavior suggests clubs value potential performance and longevity. 
+
+![Peak Age vs Minutes Played](AgePositionValueHeatmap.jpeg)
 
 ## Repo Structure
 
-Use this section to explain the structure of your repo. This should help visitors quickly figure out where they should look to find certain elements. Further, you can use this space to highlight and briefly explain important/key files in the repo.
-
+- `.gitignore`: Standard Git ignore file.
+- `AgePositionValueAnalysis.R`: Script analyzing player age, position, and market value.
+- `PeakAgeAnalysis.R`: Script focused on identifying peak performance ages.
+- `Wrangling.R`: Script used to clean and transform datasets.
+- `goals_scatterplot`: Script analyzing player position, market value, and goal contributions.
+- `minutes_played_scatterplot`: Script comparing player position, market value and playing time.
+- `positions_boxplot`: Script comparing the goal distributions among different positions.
+- `top_10_table`: Script creating a table that highlights new key metrics such as appearances and average minutes per appearance and position, goals, and market value. 
+- `README.md`: Project overview and key findings.
+- `Project_Guidelines.md`: Project expectations and requirements.
+- `Stat 184 Final Project(Initial_Draft...).pdf`: Draft report of project findings.
+- `MLA9.csl`, `apa7.csl`: Citation style files for report formatting.
+  
 ## Data Sources and Acknowledgements
 
-Be sure to list where you got any data used within the project. Be sure to acknowledge any one whose work or elements you're drawing upon.
+The data was sourced from the [Transfermarkt Football Data Kaggle repository](https://www.kaggle.com/datasets/davidcariboo/player-scores), created by David Cariboo using web scraping tools and SQL. All datasets are licensed under the CC0 (Public Domain) license and updated regularly. We used four datasets:
+- **Player Valuation** *(primary)* – Market values over time.
+- **Player Appearances** – Match-level performance data.
+- **Player Statistics & Demographics** – Positional and age data.
+- **Game Statistics** – Match outcomes and team performance indicators.
 
 ## Authors
 
-Give information about who are the authors of the project and how people can get in touch if they have questions.
+Sanjana Menon (ssm5808@psu.edu)
+Abigail Chen (akc6502@psu.edu)
+Maxwell Gerhart (mbg5979@psu.edu)
