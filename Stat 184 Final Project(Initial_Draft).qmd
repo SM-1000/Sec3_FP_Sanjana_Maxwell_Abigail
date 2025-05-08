@@ -764,7 +764,6 @@ This raises hypotheses worth exploring further:
 - Does investment in specific positions better explain performance than raw value?
 - Are teams with more balanced squad utilization (minutes played) more successful?
 
-### Top 15 Teams by Win Percentages and Player Metrics
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # prepare players with birth_date
