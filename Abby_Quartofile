@@ -1,0 +1,314 @@
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+# load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(gt)
+
+#load csv files
+# Load data from your local directory
+appearances <- read.csv("/Users/abbychen/Downloads/FootballDataset/appearances.csv")
+player_valuations <- read.csv("/Users/abbychen/Downloads/FootballDataset/player_valuations.csv")
+players <- read.csv("/Users/abbychen/Downloads/FootballDataset/players.csv")
+games <- read.csv("/Users/abbychen/Downloads/FootballDataset/games.csv")
+clubs <- read.csv("/Users/abbychen/Downloads/FootballDataset/clubs.csv")
+
+# Define top 5 European football leagues
+top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")  # Premier League, Ligue 1, Serie A, La Liga, Bundesliga
+
+# Define season date range
+season_start <- as.Date("2024-08-01")
+season_end <- as.Date("2025-06-30")
+
+# Clean and filter appearances data
+appearances_top5 <- appearances %>%
+  filter(competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Clean and filter player valuations data
+player_valuations_top5 <- player_valuations %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Prepare player data with standardized dates - convert from string format
+players <- players %>%
+  mutate(birth_date = as.Date(substr(date_of_birth, 1, 10)))  # Extract date part from datetime string
+
+# Filter valuations for current season
+valuations_season <- player_valuations_top5 %>%
+  filter(between(date, season_start, season_end)) %>%
+  left_join(players, by = "player_id", suffix = c("", "_player")) %>%
+  mutate(age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25)
+
+#cleaning player_valuations data
+player_valuations_top5 <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(date >= season_start & date <= season_end, 
+         player_club_domestic_competition_id %in% top5_leagues)
+
+# filter player valuations to the correct leagues and date range
+valuations_season <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# calculate average market value per club during the season
+club_market_values <- valuations_season %>%
+  group_by(current_club_id) %>%
+  summarise(
+    avg_market_value = mean(market_value_in_eur, na.rm = TRUE),
+    n_players = n()
+  ) %>%
+  ungroup()
+
+# filter and prepare match results for the same season and leagues
+games_season <- games %>%
+  mutate(date = as.Date(date)) %>%
+  filter(competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# determine match winner 
+games_with_results <- games_season %>%
+  mutate(winner = case_when(
+    home_club_goals > away_club_goals ~ home_club_id,
+    away_club_goals > home_club_goals ~ away_club_id,
+    TRUE ~ NA_integer_
+  ))
+
+# convert match data to team-level records
+team_game_stats <- games_with_results %>%
+  pivot_longer(cols = c(home_club_id, away_club_id),
+               names_to = "home_away", values_to = "club_id") %>%
+  group_by(club_id) %>%
+  summarise(
+    games_played = n(),
+    wins = sum(club_id == winner, na.rm = TRUE),
+    win_percentage = wins / games_played
+  ) %>%
+  ungroup()
+
+# merge market value with win percentage and club names
+club_performance <- team_game_stats %>%
+  left_join(club_market_values, by = c("club_id" = "current_club_id")) %>%
+  left_join(clubs, by = "club_id")  #assumes clubs has club_id and name
+
+```
+
+
+---
+title: "Stat 184 Final Project"
+format: pdf
+---
+
+# Introduction
+
+Football is the most popular sport in the world, where major tournaments like the FIFA World Cup and major leagues such as the English Premier League, Ligue 1, Serie A, La Liga and the Bundesliga attract billions of followers and viewers. Better known as soccer in the United States, football is a simple game where two teams compete to score goals by moving the ball into the opposing net, primarily using their feet. Contrasting the simplicity of the game is the dynamics behind the scenes, where clubs invest heavily in players after analyzing metrics like market value, match statistics, and positional roles. This leads us to our project, which examines how player attributes such as age, minutes played, position, and goal contributions as well as the team attribute of winning percentages relate to market valuation and ultimate team success across the top 5 leagues, particularly for the 2024-2025 season.
+
+# Research Questions
+
+Our goal is to get a better understanding of how player and eventually, team performance metrics relate to both market valuation and team outcomes. In order to accomplish that, we ask: How does a player's age and position influence their minutes played and market value? Do players with higher goal contributions consistently have greater market worth? How do team averages such as player age, minutes played, and goal contributions correlate with win percentages across competitions?
+
+Through visual analyses, including scatterplots, boxplot, heatmap, and summary tables, we aim to understand how measurable performance indicators influence both individual worth and collective outcomes in the sport.
+
+# Provenance of Our Data
+
+For this project, we used four datasets to gather core performance indicators in football, all obtained from Transfermarkt's Football Data posted on Kaggle. Transfermarkt is a widely used football database that tracks player market values, match statistics, transfers, and club performance across global competitions. The dataset was created and maintained by David Cariboo, who used a web-scraping tool called transfermarkt-scraper along with Python scripts and SQL queries to extract, clean, and publish the data. The full data pipeline and source code are available on his GitHub. The purpose of his work is to keep these datasets up to date and publicly available on well-known data catalogs. The data is publicly available under the CC0 (Public Domain) license, with an expected update frequency of once per week. Our primary data source was Player Valuation while our secondary sources were Player Appearances, Player Statistics & Demographics and Game Statistics.
+
+## Primary Dataset
+
+-   **Player Valuation**: This was our main dataset that provided market value data for players over time. Key attributes were used consistently throughout our visualizations, which were player_id, date, and market_value_in_eur. The case is a single player.
+
+## Secondary Datasets
+
+-   **Player Appearances**: This dataset includes detailed match-level data on individual players. We used attributes like game_id, player_id, player_club_id, goals, assists, and minutes_played to analyze player contributions across matches. The case is a single player.
+
+-   **Player Statistics & Demographics**: This dataset includes personal and positional data for players. Our analysis focused on position, while also referencing identifiers like player_id and broader details such as date_of_birth for age related analysis. The case is a single player.
+
+-   **Game Statistics**: This dataset includes match-level team performance indicators. We used game_id, home_club_id, away_club_id, home_club_goals, and away_club_goals to calculate our new attribute, win percentages. Other fields, including competition_id, season, and round, offer useful structural context for game outcomes. The case is a single game.
+
+# Implementation of FAIR & CARE Principles
+
+## FAIR Principles
+
+## CARE Principles
+
+# Exploratory Data Analysis (EDA)
+
+### Age, Playing Time & Position
+
+### Age, Position & Market Value
+
+### Playing Time, Market Value & Position
+
+### Goals, Market Value & Position
+
+### Goal Distribution by Position
+
+### Market Value & Win Percentages
+Figure 6 illustrates the relationship between a football club’s average market value (y-axis, in millions of euros) and its win percentage during the 2024–25 season (x-axis), across the top five European leagues. Each point represents a single club. The blue line represents a linear trend fitted to the data.
+
+From the graph, we can observe a positive linear trend: as clubs' market values increase, their win percentages also tend to rise. The scatterplot shows a broad spread in both variables, but the upward slope of the regression line suggests that wealthier teams tend to perform better on average. Still, the data points are widely dispersed, indicating that market value alone does not perfectly predict win rate — several low-market-value clubs perform well, and a few high-value clubs underperform.
+
+This visualization aligns with the well-documented assumption in football analytics that financial resources correlate with success, as wealthier clubs can afford more talented or experienced players. However, the wide dispersion hints at the influence of other factors that may enable less expensive teams to compete effectively or cause expensive squads to fall short.
+
+When this figure is considered alongside Table 1 (Top Teams Table), patterns emerge suggesting that average player age, minutes played, and goal contribution may be mediators in this relationship. For example, younger teams with high contributions might be delivering high value per euro spent, signaling smart investment strategies.
+
+This raises hypotheses worth exploring further:
+➱ Does investment in specific positions better explain performance than raw value?
+➱ Are teams with more balanced squad utilization (minutes played) more successful?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# plot market value vs win percentage with club labels
+ggplot(club_performance, aes(x = win_percentage, y = avg_market_value)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  scale_y_continuous(
+    labels = function(x) paste0(round(x / 1e6), "M")
+  ) +
+  labs(
+    title = "Do Teams With Higher Market Values Win More?",
+    subtitle = "Top 5 European Leagues, 2024–25 Season",
+    x = "Win Percentage",
+    y = "Average Market Value (millions of eur)"
+  ) +
+  theme_minimal()
+```
+    **Figure 6.** Relationship Between Market Value and Win Percentage
+
+### Top 15 Teams by Win Percentages and Player Metrics
+```{r, echo=FALSE}
+# prepare players with birth_date
+players_cleaned <- players %>%
+  mutate(birth_date = as.Date(substr(date_of_birth, 1, 10))) %>%
+  select(player_id, birth_date)
+
+# join players to appearances to get age and contribution
+appearances_with_stats <- appearances %>%
+  mutate(date = as.Date(date)) %>%
+  left_join(players_cleaned, by = "player_id") %>%
+  mutate(
+    age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25,
+    goal_contribution = goals + assists
+  )
+
+# summarize per club
+team_stats <- appearances_with_stats %>%
+  group_by(player_club_id) %>%
+  summarise(
+    avg_age = mean(age, na.rm = TRUE),
+    avg_minutes = mean(minutes_played, na.rm = TRUE),
+    avg_goal_contribution = mean(goal_contribution, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# merge with win percentage and club name
+top_teams_table <- club_performance %>%
+  select(club_id, win_percentage) %>%
+  left_join(team_stats, by = c("club_id" = "player_club_id")) %>%
+  left_join(clubs %>% select(club_id, name), by = "club_id") %>%
+  select(name, win_percentage, avg_age, avg_minutes, avg_goal_contribution) %>%
+  arrange(desc(win_percentage)) %>%
+  slice_head(n = 15)
+
+# view table
+top_teams_table %>%
+  gt() %>%
+  fmt_number(columns = where(is.numeric), decimals = 2) %>%
+  tab_header(
+    title = "Top 15 Teams by Win Percentages and Player Metrics"
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = everything()
+  )
+top_teams_table
+```
+
+# Conclusion
+
+
+### Code Appendix
+# Data Wrangling Code 
+# load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+# Define top 5 European football leagues
+top5_leagues <- c("GB1", "FR1", "IT1", "ES1", "L1")  # Premier League, Ligue 1, Serie A, La Liga, Bundesliga
+
+# Define season date range
+season_start <- as.Date("2024-08-01")
+season_end <- as.Date("2025-06-30")
+
+# Clean and filter appearances data
+appearances_top5 <- appearances %>%
+  filter(competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Clean and filter player valuations data
+player_valuations_top5 <- player_valuations %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues) %>%
+  mutate(date = as.Date(date))
+
+# Prepare player data with standardized dates - convert from string format
+players <- players %>%
+  mutate(birth_date = as.Date(substr(date_of_birth, 1, 10)))  # Extract date part from datetime string
+
+# Filter valuations for current season
+valuations_season <- player_valuations_top5 %>%
+  filter(between(date, season_start, season_end)) %>%
+  left_join(players, by = "player_id", suffix = c("", "_player")) %>%
+  mutate(age = as.numeric(difftime(date, birth_date, units = "days")) / 365.25)\
+
+#cleaning player_valuations data
+player_valuations_top5 <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(date >= season_start & date <= season_end, 
+         player_club_domestic_competition_id %in% top5_leagues)
+
+# filter player valuations to the correct leagues and date range
+valuations_season <- player_valuations %>%
+  mutate(date = as.Date(date)) %>%
+  filter(player_club_domestic_competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# calculate average market value per club during the season
+club_market_values <- valuations_season %>%
+  group_by(current_club_id) %>%
+  summarise(
+    avg_market_value = mean(market_value_in_eur, na.rm = TRUE),
+    n_players = n()
+  ) %>%
+  ungroup()
+
+# filter and prepare match results for the same season and leagues
+games_season <- games %>%
+  mutate(date = as.Date(date)) %>%
+  filter(competition_id %in% top5_leagues,
+         date >= season_start & date <= season_end)
+
+# determine match winner 
+games_with_results <- games_season %>%
+  mutate(winner = case_when(
+    home_club_goals > away_club_goals ~ home_club_id,
+    away_club_goals > home_club_goals ~ away_club_id,
+    TRUE ~ NA_integer_
+  ))
+
+# convert match data to team-level records
+team_game_stats <- games_with_results %>%
+  pivot_longer(cols = c(home_club_id, away_club_id),
+               names_to = "home_away", values_to = "club_id") %>%
+  group_by(club_id) %>%
+  summarise(
+    games_played = n(),
+    wins = sum(club_id == winner, na.rm = TRUE),
+    win_percentage = wins / games_played
+  ) %>%
+  ungroup()
+
+# merge market value with win percentage and club names
+club_performance <- team_game_stats %>%
+  left_join(club_market_values, by = c("club_id" = "current_club_id")) %>%
+  left_join(clubs, by = "club_id")  #assumes clubs has club_id and name
