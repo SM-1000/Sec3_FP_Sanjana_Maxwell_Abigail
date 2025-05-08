@@ -39,6 +39,7 @@ season_end <- as.Date("2025-06-30")
 valuations_season <- player_valuations %>%
   filter(between(date, season_start, season_end))
 
+# Aggregate player appearances
 player_stats <- appearances %>%
   filter(date >= season_start & date <= season_end) %>%
   group_by(player_id) %>%
@@ -83,7 +84,5 @@ goal_plot <- ggplot(player_analysis, aes(x = total_goals, y = avg_market_value, 
     legend.title = element_text(size = 10),
     legend.text = element_text(size = 9)
   )
-
-print(goal_plot)
 
 print(goal_plot)

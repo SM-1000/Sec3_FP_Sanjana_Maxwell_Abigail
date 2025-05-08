@@ -71,7 +71,7 @@ player_analysis <- player_stats %>%
 appearance_plot <- ggplot(
   player_analysis,
   aes(x = total_minutes, y = avg_market_value, color = position)
-) +
+  ) +
   geom_point(alpha = 0.5, size = 1.3) +
   geom_smooth(method = "loess", se = FALSE) +
   scale_color_brewer(palette = "Set1") +
